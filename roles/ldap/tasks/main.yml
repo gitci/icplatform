@@ -1,0 +1,18 @@
+---
+- name: Enable silent install
+  script: ldapInstaller.sh
+  #shell: echo -e " slapd slapd/internal/generated_adminpw password {{admin_password}} slapd slapd/password2 password {{admin_password}} slapd slapd/internal/adminpw password {{admin_password}} slapd slapd/password1 password {{admin_password}} " | debconf-set-selections
+- name: Install openLDAP
+  apt: name={{item}} state=present force=yes
+  with_items:
+    - slapd
+    - ldap-utils
+- name: Create ddbb directory
+  file: path={{ddbb_path}} state=directory owner=openldap group=openldap
+- name: Copy frontend ldif file to remote user home dir
+  template: src=frontend.ldif dest={{ansible_env.HOME}}/frontend.ldif
+- name: Load frontend
+  command: ldapadd -x -D cn=admin,{{base_dn}} -w secret -f {{ansible_env.HOME}}/frontend.ldif
+  ignore_errors: true
+#- name: Restart ldap service
+#  service: name=slapd state=restarted

@@ -1,0 +1,11 @@
+---
+- name: Install redis
+  apt: name=redis-server state=present force=yes
+- name: Copy config file
+  copy: src=redis.conf dest=/etc/redis/redis.conf
+- name: Restart service
+  service: name=redis-server state=restarted
+- name: Add git to the redis group
+  shell: usermod -aG redis {{gituser}}
+- name: Start service
+  service: name=redis-server state=started

@@ -1,0 +1,24 @@
+#################################################
+# General Settings
+hostname: icplatform.golili.net
+remote_user: vagrant
+
+#################################################
+# OpenLDAP Settings
+# admin_user: admin
+admin_password: secret
+ddbb_path: /var/lib/ldap/golili
+base_dn: dc=golili,dc=net
+
+#################################################
+# Gitlab
+gitlab_basedir: /home/git/gitlab
+gitlab_reposdir: /home/git/repos
+gituser: git
+gitpassword: git
+gitlab_root_password: password
+
+ldap_host: localhost
+ldap_port: 389
+#bind_dn: 'cn=admin,dc=golili,dc=net'
+#search_base: 'ou=people,dc=golili,dc=net'

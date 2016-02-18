@@ -1,0 +1,39 @@
+---
+- name: Remove previous ruby package
+  apt: name=ruby state=absent force=yes
+#- name: Create tmp dir
+#  file: path=/tmp/ruby state=directory
+#- name: Download ruby
+#  get_url: url=https://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.7.tar.gz dest=/tmp/ruby/ruby-2.1.7.tar.gz force=no
+#- name: Untar ruby archive
+#  unarchive: src=/tmp/ruby/ruby-2.1.7.tar.gz dest=/tmp/ruby copy=no
+#- name: Configure
+#  shell: ./configure --disable-install-rdoc chdir=/tmp/ruby/ruby-2.1.7
+#- name: Make
+#  shell: make chdir=/tmp/ruby/ruby-2.1.7
+#- name: Install
+#  shell: make install chdir=/tmp/ruby/ruby-2.1.7
+#- name: Delete installer
+#  file: path=/tmp/ruby state=absent
+- name: Add ruby2 ppa repository
+  apt_repository: repo='ppa:brightbox/ruby-ng' state=present validate_certs=no
+- name: Install Ruby
+  apt: state=present force=yes update_cache=no name={{item}}
+  with_items:
+    - ruby2.3
+    - ruby2.3-dev
+    #- rubygems
+    #- irb2.1
+    - libdri2-1
+    #- rdoc2.1
+    #- build-essential
+    #- libopenssl-ruby2.1
+    #- libssl-dev
+    #- zlib1g-dev
+- name: Install bundler
+  gem: name=bundler state=present build_flags='--no-ri --no-rdoc'
+  become: yes
+  #become_user: '{{remote_user}}'
+  # shell: gem install bundler --no-ri --no-rdoc
+#- name: Remove installer
+#  file: path=/tmp/ruby state=absent

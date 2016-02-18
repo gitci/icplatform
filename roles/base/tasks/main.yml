@@ -1,0 +1,43 @@
+---
+- name: Set hostname
+  hostname: name={{hostname}}
+#- name: Create git user
+#  user: name={{gituser}} comment=GitLab system=yes state=present
+- name: Generate locale
+  locale_gen: name=en_US.UTF-8 state=present
+#- name: Set LANGUAGE
+#  shell: export LANGUAGE=en_US.UTF-8
+#- name: Set LC_ALL
+#  shell: export LC_ALL=en_US.UTF-8
+- name: Reconfigure locales
+  shell: dpkg-reconfigure locales
+#- name: Install required packages
+#  apt: name={{item}} state=present update_cache=yes force=yes
+#  with_items:
+#    - postfix
+#    - build-essential
+#    - libyaml-dev
+#    - libgdbm-dev
+#    - libncurses5-dev
+#    - libffi-dev
+#    - curl
+#    - redis-server
+#    - checkinstall
+#    - libxml2-dev
+#    - libxslt-dev
+#    - libcurl4-openssl-dev
+#    - libicu-dev
+#    - python-docutils
+#    - cmake
+#    - nodejs
+#    - git
+#    - postgresql
+#    - postgresql-client
+#    - libpq-dev
+#    - python-psycopg2
+#    - unzip
+#    - nginx
+#- name: Global git config
+#  shell: git config --global core.autocrlf input
+#  become: yes
+#  become_user: "{{gituser}}"

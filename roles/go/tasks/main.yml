@@ -1,0 +1,15 @@
+---
+- name: Create tmp dir
+  file: path=/tmp/go state=directory
+- name: Download archive
+  get_url: url=https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz dest=/tmp/go/go1.5.1.linux-amd64.tar.gz force=no
+- name: Uncompress go archive
+  unarchive: src=/tmp/go/go1.5.1.linux-amd64.tar.gz dest=/usr/local copy=no
+- name: Create symlinks
+  file: src=/usr/local/go/bin/{{item}} dest=/usr/local/bin/{{item}} state=link
+  with_items:
+    - go
+    - godoc
+    - gofmt
+#- name: Remove installer
+#  file: path=/tmp/go state=absent

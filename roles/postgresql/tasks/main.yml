@@ -1,0 +1,19 @@
+---
+- name: Install postgresql
+  apt: name={{item}} state=present force=yes
+  with_items:
+    - postgresql
+    - postgresql-client
+    - libpq-dev
+    - python-psycopg2
+- name: Create cluster
+  shell: pg_createcluster 9.3 main --start
+  ignore_errors: true
+- name: Create GitLab production database
+  postgresql_db: name=gitlabhq_production template='template1' state=present
+  #become: yes
+  become_user: postgres
+- name: Create postgre user for GitLab
+  postgresql_user: db=gitlabhq_production name={{gituser}} password={{gitpassword}} state=present
+  #become: yes
+  become_user: postgres

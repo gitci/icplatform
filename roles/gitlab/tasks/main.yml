@@ -1,0 +1,99 @@
+---
+- name: Install required packages
+  apt: name={{item}} state=present force=yes
+  with_items:
+  - build-essential
+  - zlib1g-dev
+  - libyaml-dev
+  - libssl-dev
+  - libgdbm-dev
+  - libreadline-dev
+  - libncurses5-dev
+  - libffi-dev
+  - curl
+  - openssh-server
+  - checkinstall
+  - libxml2-dev
+  - libxslt-dev
+  - libcurl4-openssl-dev
+  - libicu-dev
+  - logrotate
+  - python-docutils
+  - pkg-config
+  - cmake
+  - nodejs
+  - git
+  - nginx
+#- name: Global git config
+#  shell: git config --global core.autocrlf input
+#  become: yes
+#  become_user: "{{gituser}}"
+- name: Clone GitLab repo
+  git: repo=https://gitlab.com/gitlab-org/gitlab-ce.git dest={{gitlab_basedir}} version=8-4-stable
+  become_user: "{{gituser}}"
+- name: Copy config templates
+  template: src={{item}} dest={{gitlab_basedir}}/config owner={{gituser}}
+  with_items:
+  - unicorn.rb
+  - gitlab.yml
+  - database.yml
+- name: Change gitlab dir owner
+  file: path={{gitlab_basedir}} recurse=yes state=directory owner={{gituser}} group={{gituser}}
+- name: Install bundler
+  gem: name=bundler state=present build_flags='--no-ri --no-rdoc'
+  become_user: "{{gituser}}"
+- name: Install gems
+  bundler: state=present extra_args='-j2 --deployment --without development test mysql aws kerberos' executable={{gitlab_basedir}}/bin/bundle gemfile={{gitlab_basedir}}/Gemfile
+  become_user: "{{gituser}}"
+- name: Copy the example secrets file
+  copy: src=secrets.yml dest={{gitlab_basedir}}/config mode=600 owner={{gituser}} group={{gituser}}
+- name: Copy the example Rack attack config
+  copy: src=rack_attack.rb dest={{gitlab_basedir}}/config/initializers owner={{gituser}} group={{gituser}}
+- name: Configure Redis connection settings
+  copy: src=resque.yml dest={{gitlab_basedir}}/config owner={{gituser}} group={{gituser}}
+
+# Gitlab Workhorse
+- name: Clone Gitlab Workhorse repo
+  git: repo=https://gitlab.com/gitlab-org/gitlab-workhorse.git dest={{gitlab_basedir}}/gitlab-workhorse version=0.4.0
+  become_user: "{{gituser}}"
+- name: Make gitlab workhorse
+  shell: make install chdir={{gitlab_basedir}}/gitlab-workhorse
+
+  # Gitlab shell
+- name: Install gitlab-shell
+  shell: /home/git/gitlab/bin/bundle exec rake gitlab:shell:install REDIS_URL=unix:/var/run/redis/redis.sock RAILS_ENV=production chdir={{gitlab_basedir}}
+  become_user: "{{gituser}}"
+- name: Copy gitlab shell config file
+  template: src=config.yml.gitlab-shell dest={{gitlab_basedir}}/gitlab-shell mode=644 owner={{gituser}} group={{gituser}}
+  become_user: "{{gituser}}"
+
+- name: Initialize Database
+  shell: /home/git/gitlab/bin/bundle exec rake gitlab:setup RAILS_ENV=production GITLAB_ROOT_PASSWORD={{gitlab_root_password}} force=yes chdir={{gitlab_basedir}}
+  become_user: "{{gituser}}"
+- name: Copy init script
+  template: src=gitlab.service dest=/etc/init.d/gitlab mode=755 owner=root
+- name: Copy default settings
+  template: src=gitlab.default.example dest=/etc/default/gitlab mode=644 owner=root
+- name: Make GitLab start on boot
+  shell: update-rc.d gitlab defaults 21
+- name: Setup Logrotate
+  template: src=gitlab.logrotate dest=/etc/logrotate.d/gitlab mode=644 owner=root
+- name: Compile assets
+  shell: /home/git/gitlab/bin/bundle exec rake assets:precompile RAILS_ENV=production chdir={{gitlab_basedir}}
+  become_user: "{{gituser}}"
+
+# nginx
+- name: Copy nginx config file
+  template: src=gitlab.nginx dest=/etc/nginx/sites-available/gitlab
+- name: Create symlink
+  file: src=/etc/nginx/sites-available/gitlab dest=/etc/nginx/sites-enabled/gitlab state=link
+- name: Restart nginx
+  service: name=nginx state=restarted
+
+  # Make sure bundler is available for root and start gitlab service
+- name: Install bundler
+  gem: name=bundler state=present
+  become: yes
+- name: Start gitlab service
+  service: name=gitlab state=restarted
+
