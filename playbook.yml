@@ -6,15 +6,11 @@
     GIT_SSL_NO_VERIFY: 1
     LANGUAGE: en_US.UTF-8
     LC_ALL: en_US.UTF-8
-    # Proxy settings
-    #http_proxy: http://T0000104:12345678@proxycorp.geci:8080
-    #https_proxy: $http_proxy
-    #ftp_proxy: $http_proxy
   roles:
   - base
   - ldap
-#  - ruby
-#  - go
-#  - postgresql
-#  - redis
-#  - gitlab
+  - ruby
+  - go
+  - postgresql
+  - redis
+  - gitlab
